@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result — HealthCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--blue-mid:#8faee0;--blue-accent:#4a6bbf;--text-dark:#1a2e5a;--text-mid:#3e3d3d;--text-light:#6b8fb8;--radius-lg:20px;--radius-md:12px;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'DM Sans',sans-serif;min-height:100vh;background:url("{{ url_for('static', filename='background.jpg') }}")center/cover no-repeat fixed;color:var(--text-dark);}
+        .navbar{background:rgba(229,233,253,0.72)!important;backdrop-filter:blur(22px);border-bottom:1px solid rgba(255,255,255,0.6);box-shadow:0 2px 20px rgba(107,143,214,0.10);position:sticky;top:0;z-index:999;}
+        .navbar-brand{font-family:'Playfair Display',serif;color:var(--blue-accent)!important;font-size:1.5rem;font-weight:700;}
+        .navbar-brand span{color:var(--text-dark);}
+        .nav-link{color:var(--text-mid)!important;font-size:0.9rem;font-weight:500;padding:7px 14px!important;border-radius:50px;transition:all 0.25s;}
+        .nav-link:hover{color:var(--blue-accent)!important;background:rgba(107,143,214,0.13);}
+        .profile-wrapper{position:relative;display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 14px;border-radius:50px;border:1.5px solid rgba(107,143,214,0.30);background:rgba(255,255,255,0.45);transition:all 0.25s;user-select:none;}
+        .profile-wrapper:hover,.profile-wrapper.open{background:rgba(255,255,255,0.75);border-color:var(--blue-accent);}
+        .profile-avatar{width:30px;height:30px;border-radius:50%;border:2px solid white;}
+        .profile-label{font-size:0.85rem;font-weight:600;color:var(--text-dark);}
+        .profile-caret{font-size:0.6rem;color:var(--text-light);transition:transform 0.25s;}
+        .profile-wrapper.open .profile-caret{transform:rotate(180deg);}
+        .drop-menu{display:none;position:absolute;top:calc(100% + 10px);right:0;background:rgba(240,243,255,0.97);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.75);border-radius:var(--radius-md);box-shadow:0 12px 36px rgba(74,107,191,0.18);min-width:210px;overflow:hidden;animation:dropIn 0.2s ease;z-index:9999;}
+        .drop-menu.open{display:block;}
+        @keyframes dropIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+        .drop-header{padding:16px 18px 12px;background:rgba(107,143,214,0.08);border-bottom:1px solid rgba(107,143,214,0.12);}
+        .drop-header .dh-name{font-weight:700;font-size:0.95rem;color:var(--text-dark);}
+        .drop-header .dh-email{font-size:0.75rem;color:var(--text-light);margin-top:2px;}
+        .drop-item{display:flex;align-items:center;gap:12px;padding:13px 18px;font-size:0.9rem;color:var(--text-mid);text-decoration:none;border-bottom:1px solid rgba(107,143,214,0.08);transition:background 0.2s,color 0.2s;}
+        .drop-item:last-child{border-bottom:none;}
+        .drop-item:hover{background:rgba(107,143,214,0.10);color:var(--blue-accent);}
+        .drop-item.logout{color:#c0392b;}.drop-item.logout:hover{background:rgba(192,57,43,0.07);}
+        .drop-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;background:rgba(107,143,214,0.10);flex-shrink:0;}
+        .drop-item.logout .drop-icon{background:rgba(192,57,43,0.10);}
+
+        /* PAGE */
+        .page-wrap{max-width:600px;margin:0 auto;padding:50px 16px 80px;}
+
+        /* RESULT HERO */
+        .result-hero{
+            background:linear-gradient(135deg,#c5d4f5 0%,#8faee0 50%,#4a6bbf 100%);
+            border-radius:var(--radius-lg);padding:44px 32px;text-align:center;
+            color:white;margin-bottom:20px;
+            box-shadow:0 10px 40px rgba(74,107,191,0.32);
+            position:relative;overflow:hidden;
+        }
+        .result-hero::before{
+            content:'🧠';font-size:8rem;opacity:0.08;
+            position:absolute;top:-20px;right:-20px;line-height:1;
+        }
+        .result-hero .disease-label{font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;opacity:0.85;margin-bottom:10px;}
+        .result-hero h1{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;margin-bottom:14px;line-height:1.1;}
+        .conf-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.40);border-radius:50px;padding:6px 18px;font-size:0.85rem;font-weight:600;}
+
+        /* CARDS */
+        .result-card{background:rgba(255,255,255,0.40);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.65);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:16px;box-shadow:0 4px 20px rgba(107,143,214,0.10);}
+        .result-card h4{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--text-dark);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(107,143,214,0.12);}
+
+        /* Symptoms matched */
+        .symptom-tags{display:flex;flex-wrap:wrap;gap:8px;}
+        .symptom-tag{background:rgba(107,143,214,0.10);color:var(--blue-accent);font-size:0.82rem;padding:5px 14px;border-radius:50px;border:1px solid rgba(107,143,214,0.20);font-weight:500;}
+
+        /* Precautions */
+        .prec-list{list-style:none;padding:0;}
+        .prec-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(107,143,214,0.07);}
+        .prec-item:last-child{border-bottom:none;}
+        .prec-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue-mid),var(--blue-accent));color:white;font-size:0.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .prec-text{font-size:0.9rem;color:var(--text-mid);padding-top:4px;}
+
+        /* DISCLAIMER */
+        .disclaimer{background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.22);border-radius:var(--radius-md);padding:14px 18px;font-size:0.82rem;color:#9a6c00;line-height:1.6;margin-bottom:20px;}
+
+        /* BUTTONS */
+        .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+        .btn-back{display:flex;align-items:center;justify-content:center;gap:6px;padding:13px;border-radius:var(--radius-md);font-weight:600;font-size:0.92rem;text-decoration:none;transition:all 0.25s;}
+        .btn-back.primary{background:linear-gradient(135deg,var(--blue-mid),var(--blue-accent));color:white;box-shadow:0 4px 16px rgba(74,107,191,0.28);}
+        .btn-back.primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(74,107,191,0.38);color:white;}
+        .btn-back.outline{background:rgba(255,255,255,0.50);color:var(--blue-accent);border:1.5px solid rgba(107,143,214,0.30);}
+        .btn-back.outline:hover{background:rgba(255,255,255,0.80);transform:translateY(-1px);color:var(--blue-accent);}
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('dashboard_home') }}">💙 Health<span>Center</span></a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto gap-1 align-items-lg-center">
+                <li><a class="nav-link" href="{{ url_for('dashboard_home') }}">🏠 Home</a></li>
+                <li><a class="nav-link" href="{{ url_for('games') }}">🎯 Games</a></li>
+                <li><a class="nav-link" href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a></li>
+                <li><a class="nav-link" href="{{ url_for('blogs') }}">📝 Blogs</a></li>
+                <li class="nav-item">
+                    <div class="profile-wrapper" id="profileToggle" onclick="toggleDrop()">
+                        <img src="https://ui-avatars.com/api/?name={{ session['user']|urlencode }}&background=4a6bbf&color=fff&size=32&rounded=true" alt="avatar" class="profile-avatar">
+                        <span class="profile-label">{{ session['user'].split('@')[0] }}</span>
+                        <span class="profile-caret">▼</span>
+                        <div class="drop-menu" id="dropMenu">
+                            <div class="drop-header">
+                                <div class="dh-name">{{ session['user'].split('@')[0] }}</div>
+                                <div class="dh-email">{{ session['user'] }}</div>
+                            </div>
+                            <a href="{{ url_for('profile') }}" class="drop-item"><span class="drop-icon">👤</span><span>User Info</span></a>
+                            <a href="{{ url_for('disease_history') }}" class="drop-item"><span class="drop-icon">📋</span><span>Disease History</span></a>
+                            <a href="{{ url_for('logout') }}" class="drop-item logout"><span class="drop-icon">🚪</span><span>Logout</span></a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="page-wrap">
+
+    <!-- RESULT HERO -->
+    <div class="result-hero">
+        <div class="disease-label">🧠 AI Prediction Result</div>
+        <h1>{{ result.disease }}</h1>
+        <span class="conf-pill">📊 Confidence: {{ result.confidence }}</span>
+    </div>
+
+    <!-- SYMPTOMS MATCHED -->
+    {% if matched %}
+    <div class="result-card">
+        <h4>🔍 Symptoms Detected</h4>
+        <div class="symptom-tags">
+            {% for s in matched %}
+            <span class="symptom-tag">{{ s }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- PRECAUTIONS -->
+    <div class="result-card">
+        <h4>✅ Recommended Precautions</h4>
+        <ul class="prec-list">
+            {% if result.precautions is string %}
+                {% for p in result.precautions.split(',') %}
+                <li class="prec-item">
+                    <span class="prec-num">{{ loop.index }}</span>
+                    <span class="prec-text">{{ p.strip() }}</span>
+                </li>
+                {% endfor %}
+            {% else %}
+                {% for p in result.precautions %}
+                <li class="prec-item">
+                    <span class="prec-num">{{ loop.index }}</span>
+                    <span class="prec-text">{{ p }}</span>
+                </li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer">
+        ⚠️ <strong>Medical Disclaimer:</strong> This is an AI-generated prediction for informational purposes only.
+        Please consult a qualified healthcare professional for proper medical advice and diagnosis.
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="btn-row">
+        <a href="{{ url_for('dashboard_home') }}" class="btn-back primary">🏠 Check Again</a>
+        <a href="{{ url_for('disease_history') }}" class="btn-back outline">📋 View History</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleDrop(){const m=document.getElementById('dropMenu'),t=document.getElementById('profileToggle');const o=m.classList.toggle('open');t.classList.toggle('open',o);}
+    document.addEventListener('click',function(e){const w=document.getElementById('profileToggle');if(w&&!w.contains(e.target)){document.getElementById('dropMenu').classList.remove('open');w.classList.remove('open');}});
+</script>
+</body>
+</html>

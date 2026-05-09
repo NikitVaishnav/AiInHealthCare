@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Disease History</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- paste common style here -->
+</head>
+
+<body>
+
+<nav class="navbar p-3 d-flex justify-content-between">
+    <a href="/home">Healthcare</a>
+    <a href="/profile" class="btn btn-light">Profile</a>
+</nav>
+
+<div class="container mt-5">
+    <div class="card p-4">
+        <h3 class="mb-3">Disease History</h3>
+
+        <table class="table table-bordered">
+            <tr>
+                <th>Date</th>
+                <th>Symptoms</th>
+                <th>Disease</th>
+                <th>Precautions</th>
+            </tr>
+            {% if history_records %}
+                {% for entry in history_records %}
+                <tr>
+                    <td>{{ entry.date }}</td>
+                    <td>{{ entry.symptoms }}</td>
+                    <td>{{ entry.disease }}</td>
+                    <td>{{ entry.precautions }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No prediction history yet.</td>
+                </tr>
+            {% endif %}
+
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

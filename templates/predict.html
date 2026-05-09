@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Predictor | Health Care Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --blue-mid: #8faee0;
+            --blue-accent: #4a6bbf;
+            --purple-accent: rgb(122,8,122);
+            --text-dark: #1a2e5a;
+            --text-mid: #3e3d3d;
+            --text-light: #6b8fb8;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e8edfb 0%, #c5d4f5 50%, #d4e4f7 100%);
+            padding: 40px 16px 80px;
+        }
+
+        .wrap { max-width: 680px; margin: 0 auto; }
+
+        .hero { text-align: center; margin-bottom: 36px; }
+        .hero h1 { font-size: 2.2rem; font-weight: 700; color: var(--text-dark); }
+        .hero p  { color: var(--text-light); font-size: 1rem; margin-top: 8px; }
+
+        .card-box {
+            background: rgba(255,255,255,0.50);
+            border: 1px solid rgba(255,255,255,0.65);
+            border-radius: 20px;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 8px 32px rgba(107,143,214,0.15);
+            padding: 36px 40px;
+            margin-bottom: 20px;
+        }
+
+        .symptom-slot {
+            position: relative;
+            margin-bottom: 14px;
+        }
+        .symptom-slot label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-light);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .symptom-slot input {
+            width: 100%;
+            background: rgba(255,255,255,0.70);
+            border: 1.5px solid rgba(107,143,214,0.22);
+            border-radius: 12px;
+            padding: 13px 18px;
+            font-size: 0.93rem;
+            color: var(--text-dark);
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .symptom-slot input:focus {
+            border-color: var(--blue-accent);
+            box-shadow: 0 0 0 3px rgba(74,107,191,0.12);
+            outline: none;
+            background: rgba(255,255,255,0.92);
+        }
+        .symptom-slot input::placeholder { color: var(--text-light); }
+
+        /* Autocomplete dropdown */
+        .autocomplete-list {
+            position: absolute;
+            top: 100%; left: 0; right: 0;
+            background: rgba(240,244,255,0.97);
+            border: 1px solid rgba(107,143,214,0.22);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(107,143,214,0.18);
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 999;
+            display: none;
+        }
+        .autocomplete-list div {
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: var(--text-mid);
+            transition: background 0.15s;
+        }
+        .autocomplete-list div:hover {
+            background: rgba(107,143,214,0.12);
+            color: var(--blue-accent);
+        }
+
+        .slot-num {
+            position: absolute;
+            right: 14px; top: 50%;
+            transform: translateY(-50%);
+            width: 26px; height: 26px;
+            background: rgba(107,143,214,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 700;
+            color: var(--blue-accent);
+            pointer-events: none;
+        }
+
+        .btn-predict {
+            width: 100%;
+            background: linear-gradient(135deg, var(--blue-mid), var(--blue-accent));
+            color: white; border: none;
+            border-radius: 14px;
+            padding: 15px;
+            font-size: 1rem; font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(74,107,191,0.35);
+            transition: all 0.3s;
+            margin-top: 10px;
+            letter-spacing: 0.03em;
+        }
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(74,107,191,0.45);
+        }
+
+        .tip-box {
+            background: rgba(107,143,214,0.08);
+            border: 1px solid rgba(107,143,214,0.18);
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-top: 20px;
+        }
+        .tip-box h6 { color: var(--blue-accent); font-weight: 700; margin-bottom: 10px; }
+        .tip-box ul { margin: 0; padding-left: 18px; color: var(--text-mid); font-size: 0.88rem; line-height: 2; }
+
+        .common-tags { margin-bottom: 18px; }
+        .common-tags span {
+            display: inline-block;
+            background: rgba(107,143,214,0.12);
+            border: 1px solid rgba(107,143,214,0.22);
+            border-radius: 50px;
+            padding: 5px 14px;
+            font-size: 0.8rem;
+            color: var(--blue-accent);
+            cursor: pointer;
+            margin: 4px 3px;
+            transition: all 0.2s;
+        }
+        .common-tags span:hover {
+            background: rgba(107,143,214,0.25);
+            transform: translateY(-1px);
+        }
+
+        .nav-back {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--blue-accent); text-decoration: none;
+            font-weight: 600; font-size: 0.9rem;
+            margin-bottom: 24px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50px;
+            transition: all 0.2s;
+        }
+        .nav-back:hover { background: rgba(255,255,255,0.8); }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid rgba(107,143,214,0.2);
+            border-top-color: var(--blue-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <a href="/home" class="nav-back">← Back to Home</a>
+
+    <div class="hero">
+        <div style="font-size:3rem;margin-bottom:10px">🩺</div>
+        <h1>Disease Predictor</h1>
+        <p>Enter up to 5 symptoms and our AI model will predict your condition</p>
+    </div>
+
+    <div class="card-box">
+        <h5 style="color:var(--text-dark);font-weight:700;margin-bottom:6px">⚡ Quick Select</h5>
+        <p style="font-size:0.82rem;color:var(--text-light);margin-bottom:10px">Click to fill a symptom slot</p>
+        <div class="common-tags" id="quickTags">
+            <span onclick="fillNext('fever')">fever</span>
+            <span onclick="fillNext('headache')">headache</span>
+            <span onclick="fillNext('fatigue')">fatigue</span>
+            <span onclick="fillNext('cough')">cough</span>
+            <span onclick="fillNext('nausea')">nausea</span>
+            <span onclick="fillNext('vomiting')">vomiting</span>
+            <span onclick="fillNext('skin_rash')">skin rash</span>
+            <span onclick="fillNext('joint_pain')">joint pain</span>
+            <span onclick="fillNext('chest_pain')">chest pain</span>
+            <span onclick="fillNext('breathlessness')">breathlessness</span>
+            <span onclick="fillNext('back_pain')">back pain</span>
+            <span onclick="fillNext('itching')">itching</span>
+            <span onclick="fillNext('sweating')">sweating</span>
+            <span onclick="fillNext('chills')">chills</span>
+            <span onclick="fillNext('high_fever')">high fever</span>
+        </div>
+
+        <form action="/predict" method="POST" id="predictForm" onsubmit="showLoading()">
+            <div class="symptom-slot">
+                <label>Symptom 1 *</label>
+                <input type="text" name="symptom1" id="s1" placeholder="e.g. headache" autocomplete="off" oninput="autoComplete(this, 'ac1')">
+                <div class="autocomplete-list" id="ac1"></div>
+                <div class="slot-num" style="top:68%;right:14px">1</div>
+            </div>
+            <div class="symptom-slot">
+                <label>Symptom 2 *</label>
+                <input type="text" name="symptom2" id="s2" placeholder="e.g. fever" autocomplete="off" oninput="autoComplete(this, 'ac2')">
+                <div class="autocomplete-list" id="ac2"></div>
+                <div class="slot-num" style="top:68%;right:14px">2</div>
+            </div>
+            <div class="symptom-slot">
+                <label>Symptom 3</label>
+                <input type="text" name="symptom3" id="s3" placeholder="e.g. fatigue" autocomplete="off" oninput="autoComplete(this, 'ac3')">
+                <div class="autocomplete-list" id="ac3"></div>
+                <div class="slot-num" style="top:68%;right:14px">3</div>
+            </div>
+            <div class="symptom-slot">
+                <label>Symptom 4</label>
+                <input type="text" name="symptom4" id="s4" placeholder="e.g. nausea" autocomplete="off" oninput="autoComplete(this, 'ac4')">
+                <div class="autocomplete-list" id="ac4"></div>
+                <div class="slot-num" style="top:68%;right:14px">4</div>
+            </div>
+            <div class="symptom-slot">
+                <label>Symptom 5</label>
+                <input type="text" name="symptom5" id="s5" placeholder="e.g. vomiting" autocomplete="off" oninput="autoComplete(this, 'ac5')">
+                <div class="autocomplete-list" id="ac5"></div>
+                <div class="slot-num" style="top:68%;right:14px">5</div>
+            </div>
+
+            <button type="submit" class="btn-predict">🔍 Predict Disease</button>
+
+            <div class="loading" id="loadingDiv">
+                <div class="spinner"></div>
+                <p style="color:var(--text-light);font-size:0.9rem">Analyzing symptoms...</p>
+            </div>
+        </form>
+    </div>
+
+    <div class="tip-box">
+        <h6>💡 Tips for better results</h6>
+        <ul>
+            <li>Use underscores for multi-word symptoms: <b>high_fever</b>, <b>joint_pain</b></li>
+            <li>Enter at least <b>2–3 symptoms</b> for accurate prediction</li>
+            <li>Use the quick-select tags above for common symptoms</li>
+            <li>The model considers <b>41 diseases</b> and <b>130+ symptoms</b></li>
+        </ul>
+    </div>
+</div>
+
+<script>
+let allSymptoms = [];
+
+// Load symptoms for autocomplete
+fetch('/api/symptoms')
+    .then(r => r.json())
+    .then(data => { allSymptoms = data; });
+
+function autoComplete(input, listId) {
+    const list = document.getElementById(listId);
+    const val = input.value.toLowerCase().replace(/ /g, '_');
+    if (!val || val.length < 2) { list.style.display = 'none'; return; }
+
+    const matches = allSymptoms.filter(s => s.includes(val)).slice(0, 8);
+    if (!matches.length) { list.style.display = 'none'; return; }
+
+    list.innerHTML = matches.map(s =>
+        `<div onclick="selectSymptom('${input.id}', '${listId}', '${s}')">${s.replace(/_/g, ' ')}</div>`
+    ).join('');
+    list.style.display = 'block';
+}
+
+function selectSymptom(inputId, listId, value) {
+    document.getElementById(inputId).value = value;
+    document.getElementById(listId).style.display = 'none';
+}
+
+// Fill next empty slot
+function fillNext(symptom) {
+    for (let i = 1; i <= 5; i++) {
+        const el = document.getElementById('s' + i);
+        if (!el.value) { el.value = symptom; return; }
+    }
+}
+
+function showLoading() {
+    document.getElementById('loadingDiv').style.display = 'block';
+    document.querySelector('.btn-predict').style.display = 'none';
+}
+
+// Close dropdowns on outside click
+document.addEventListener('click', e => {
+    if (!e.target.closest('.symptom-slot'))
+        document.querySelectorAll('.autocomplete-list').forEach(l => l.style.display = 'none');
+});
+</script>
+</body>
+</html>

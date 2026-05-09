@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard — HealthCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --blue-mid:#8faee0;--blue-accent:#4a6bbf;--text-dark:#1a2e5a;--text-mid:#3e3d3d;--text-light:#6b8fb8;--radius-lg:20px;--radius-md:12px; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'DM Sans',sans-serif;min-height:100vh;background:url("{{ url_for('static', filename='background.jpg') }}")center/cover no-repeat fixed;color:var(--text-dark);}
+        .navbar{background:rgba(229,233,253,0.72)!important;backdrop-filter:blur(22px);border-bottom:1px solid rgba(255,255,255,0.6);box-shadow:0 2px 20px rgba(107,143,214,0.10);position:sticky;top:0;z-index:999;}
+        .navbar-brand{font-family:'Playfair Display',serif;color:var(--blue-accent)!important;font-size:1.5rem;font-weight:700;}
+        .navbar-brand span{color:var(--text-dark);}
+        .nav-link{color:var(--text-mid)!important;font-size:0.9rem;font-weight:500;padding:7px 14px!important;border-radius:50px;transition:all 0.25s;}
+        .nav-link:hover{color:var(--blue-accent)!important;background:rgba(107,143,214,0.13);}
+        .profile-wrapper{position:relative;display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 14px;border-radius:50px;border:1.5px solid rgba(107,143,214,0.30);background:rgba(255,255,255,0.45);transition:all 0.25s;user-select:none;}
+        .profile-wrapper:hover{background:rgba(255,255,255,0.75);border-color:var(--blue-accent);}
+        .profile-avatar{width:30px;height:30px;border-radius:50%;border:2px solid white;}
+        .profile-label{font-size:0.85rem;font-weight:600;color:var(--text-dark);}
+        .profile-caret{font-size:0.6rem;color:var(--text-light);transition:transform 0.25s;}
+        .profile-wrapper.open .profile-caret{transform:rotate(180deg);}
+        .drop-menu{display:none;position:absolute;top:calc(100% + 10px);right:0;background:rgba(240,243,255,0.97);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.75);border-radius:var(--radius-md);box-shadow:0 12px 36px rgba(74,107,191,0.18);min-width:210px;overflow:hidden;animation:dropIn 0.2s ease;z-index:9999;}
+        .drop-menu.open{display:block;}
+        @keyframes dropIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+        .drop-header{padding:16px 18px 12px;background:rgba(107,143,214,0.08);border-bottom:1px solid rgba(107,143,214,0.12);}
+        .drop-header .dh-name{font-weight:700;font-size:0.95rem;color:var(--text-dark);}
+        .drop-header .dh-email{font-size:0.75rem;color:var(--text-light);margin-top:2px;}
+        .drop-item{display:flex;align-items:center;gap:12px;padding:13px 18px;font-size:0.9rem;color:var(--text-mid);text-decoration:none;border-bottom:1px solid rgba(107,143,214,0.08);transition:background 0.2s,color 0.2s;}
+        .drop-item:last-child{border-bottom:none;}
+        .drop-item:hover{background:rgba(107,143,214,0.10);color:var(--blue-accent);}
+        .drop-item.logout{color:#c0392b;}
+        .drop-item.logout:hover{background:rgba(192,57,43,0.07);}
+        .drop-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;background:rgba(107,143,214,0.10);flex-shrink:0;}
+        .drop-item.logout .drop-icon{background:rgba(192,57,43,0.10);}
+
+        /* PAGE */
+        .page-wrap { max-width: 680px; margin: 0 auto; padding: 50px 16px 80px; }
+        .page-title { font-family:'Playfair Display',serif; font-size: 2rem; color: var(--text-dark); text-align: center; margin-bottom: 6px; }
+        .page-sub { text-align: center; color: var(--text-light); font-size: 0.92rem; margin-bottom: 36px; }
+
+        /* TOP 3 PODIUM */
+        .podium { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin-bottom: 36px; }
+        .podium-block { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .podium-avatar { width: 56px; height: 56px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 16px rgba(74,107,191,0.20); }
+        .podium-name { font-size: 0.82rem; font-weight: 600; color: var(--text-dark); max-width: 80px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .podium-pts { font-size: 0.78rem; color: var(--text-light); }
+        .podium-bar { border-radius: 10px 10px 0 0; width: 80px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+        .bar-1 { height: 100px; background: linear-gradient(180deg,#f6d365,#fda085); }
+        .bar-2 { height: 72px; background: linear-gradient(180deg,#d4d4d4,#a0a0a0); }
+        .bar-3 { height: 50px; background: linear-gradient(180deg,#f0a868,#c97b3e); }
+
+        /* TABLE */
+        .lb-card { background: rgba(255,255,255,0.38); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.65); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 8px 32px rgba(107,143,214,0.12); }
+        .lb-card table { width: 100%; border-collapse: collapse; }
+        .lb-card thead th { padding: 16px 20px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); font-weight: 600; background: rgba(107,143,214,0.06); border-bottom: 1px solid rgba(107,143,214,0.12); }
+        .lb-card tbody tr { transition: background 0.2s; }
+        .lb-card tbody tr:hover td { background: rgba(107,143,214,0.05); }
+        .lb-card td { padding: 15px 20px; font-size: 0.9rem; color: var(--text-mid); border-bottom: 1px solid rgba(107,143,214,0.07); }
+        .lb-card tbody tr:last-child td { border-bottom: none; }
+        .rank-badge { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem; }
+        .r1 { background: linear-gradient(135deg,#f6d365,#fda085); color: #fff; }
+        .r2 { background: linear-gradient(135deg,#d4d4d4,#a0a0a0); color: #fff; }
+        .r3 { background: linear-gradient(135deg,#f0a868,#c97b3e); color: #fff; }
+        .r-other { background: rgba(107,143,214,0.12); color: var(--blue-accent); }
+        .user-cell { display: flex; align-items: center; gap: 12px; }
+        .user-mini-avatar { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); }
+        .pts-cell { font-weight: 700; color: var(--blue-accent); font-size: 1rem; }
+        .you-badge { background: rgba(74,107,191,0.10); color: var(--blue-accent); font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 50px; margin-left: 6px; border: 1px solid rgba(74,107,191,0.20); }
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--text-light); font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('dashboard_home') }}">💙 Health<span>Center</span></a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto gap-1 align-items-lg-center">
+                <li><a class="nav-link" href="{{ url_for('dashboard_home') }}">🏠 Home</a></li>
+                <li><a class="nav-link" href="{{ url_for('games') }}">🎯 Games</a></li>
+                <li><a class="nav-link active" href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a></li>
+                <li><a class="nav-link" href="{{ url_for('blogs') }}">📝 Blogs</a></li>
+                <li class="nav-item">
+                    <div class="profile-wrapper" id="profileToggle" onclick="toggleDrop()">
+                        <img src="https://ui-avatars.com/api/?name={{ session['user']|urlencode }}&background=4a6bbf&color=fff&size=32&rounded=true" alt="avatar" class="profile-avatar">
+                        <span class="profile-label">{{ session['user'].split('@')[0] }}</span>
+                        <span class="profile-caret">▼</span>
+                        <div class="drop-menu" id="dropMenu">
+                            <div class="drop-header">
+                                <div class="dh-name">{{ session['user'].split('@')[0] }}</div>
+                                <div class="dh-email">{{ session['user'] }}</div>
+                            </div>
+                            <a href="{{ url_for('profile') }}" class="drop-item"><span class="drop-icon">👤</span><span>User Info</span></a>
+                            <a href="{{ url_for('disease_history') }}" class="drop-item"><span class="drop-icon">📋</span><span>Disease History</span></a>
+                            <a href="{{ url_for('logout') }}" class="drop-item logout"><span class="drop-icon">🚪</span><span>Logout</span></a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="page-wrap">
+    <h1 class="page-title">🏆 Leaderboard</h1>
+    <p class="page-sub">Top health champions this season</p>
+
+    {% if leaderboard and leaderboard|length >= 3 %}
+    <!-- PODIUM TOP 3 -->
+    <div class="podium">
+        <!-- 2nd -->
+        <div class="podium-block">
+            <img src="https://ui-avatars.com/api/?name={{ leaderboard[1][0]|urlencode }}&background=a0a0a0&color=fff&size=56&rounded=true" class="podium-avatar">
+            <div class="podium-name">{{ leaderboard[1][0].split('@')[0] }}</div>
+            <div class="podium-pts">{{ leaderboard[1][1] }} pts</div>
+            <div class="podium-bar bar-2">🥈</div>
+        </div>
+        <!-- 1st -->
+        <div class="podium-block">
+            <img src="https://ui-avatars.com/api/?name={{ leaderboard[0][0]|urlencode }}&background=fda085&color=fff&size=56&rounded=true" class="podium-avatar" style="border:3px solid #fda085;">
+            <div class="podium-name">{{ leaderboard[0][0].split('@')[0] }}</div>
+            <div class="podium-pts">{{ leaderboard[0][1] }} pts</div>
+            <div class="podium-bar bar-1">🥇</div>
+        </div>
+        <!-- 3rd -->
+        <div class="podium-block">
+            <img src="https://ui-avatars.com/api/?name={{ leaderboard[2][0]|urlencode }}&background=c97b3e&color=fff&size=56&rounded=true" class="podium-avatar">
+            <div class="podium-name">{{ leaderboard[2][0].split('@')[0] }}</div>
+            <div class="podium-pts">{{ leaderboard[2][1] }} pts</div>
+            <div class="podium-bar bar-3">🥉</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- FULL TABLE -->
+    <div class="lb-card">
+        {% if leaderboard %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:60px;">Rank</th>
+                    <th>Player</th>
+                    <th style="text-align:right;">Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user, pts in leaderboard %}
+                <tr>
+                    <td>
+                        {% if loop.index == 1 %}<span class="rank-badge r1">1</span>
+                        {% elif loop.index == 2 %}<span class="rank-badge r2">2</span>
+                        {% elif loop.index == 3 %}<span class="rank-badge r3">3</span>
+                        {% else %}<span class="rank-badge r-other">{{ loop.index }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="user-cell">
+                            <img src="https://ui-avatars.com/api/?name={{ user|urlencode }}&background=8faee0&color=fff&size=34&rounded=true" class="user-mini-avatar">
+                            <span>{{ user.split('@')[0] }}</span>
+                            {% if user == session['user'] %}<span class="you-badge">You</span>{% endif %}
+                        </div>
+                    </td>
+                    <td class="pts-cell" style="text-align:right;">⭐ {{ pts }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div style="font-size:3rem;margin-bottom:12px;">🏅</div>
+            <p>No scores yet. Start completing daily goals to earn points!</p>
+            <a href="{{ url_for('games') }}" style="display:inline-block;margin-top:16px;background:var(--blue-accent);color:white;padding:10px 24px;border-radius:50px;text-decoration:none;font-weight:600;font-size:0.9rem;">Go to Games →</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleDrop() {
+        const menu=document.getElementById('dropMenu'),toggle=document.getElementById('profileToggle');
+        const isOpen=menu.classList.toggle('open');toggle.classList.toggle('open',isOpen);
+    }
+    document.addEventListener('click',function(e){
+        const w=document.getElementById('profileToggle');
+        if(w&&!w.contains(e.target)){document.getElementById('dropMenu').classList.remove('open');w.classList.remove('open');}
+    });
+</script>
+</body>
+</html>
